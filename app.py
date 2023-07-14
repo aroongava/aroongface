@@ -37,7 +37,7 @@ def main():
     image_left_ear = cv2.imread('aroong_left_ear.png', cv2.IMREAD_UNCHANGED)
 
     # For webcam input:
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)
     if not cap.isOpened():
         st.error("Failed to open the camera.")
         return
