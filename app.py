@@ -5,18 +5,6 @@ import streamlit as st
 mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
 
-def find_available_camera():
-    num_cameras = 5  # 시스템에서 확인할 카메라 수 (증가시켜보면서 확인해보세요)
-    for i in range(num_cameras):
-        cap = cv2.VideoCapture(i)
-        if cap.isOpened():
-            print(f"Found available camera at index: {i}")
-            cap.release()
-            return i
-        break
-    
-    raise ValueError("No available cameras found")
-
 def overlay(image, x, y, w, h, overlay_image):
     alpha = overlay_image[:, :, 3]
     mask_image = alpha / 255
@@ -49,9 +37,7 @@ def main():
     image_left_ear = cv2.imread('aroong_left_ear.png', cv2.IMREAD_UNCHANGED)
 
     # For webcam input:
-    camera_index = find_available_camera()
-    cap = cv2.VideoCapture(camera_index)
-
+    cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         st.error("Failed to open the camera.")
         return
