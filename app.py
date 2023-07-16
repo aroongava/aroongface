@@ -1,7 +1,6 @@
 import cv2
 import mediapipe as mp
 import streamlit as st
-import streamlit_webrtc as webrtc
 
 mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
@@ -37,19 +36,28 @@ def main():
     image_right_ear = cv2.imread('aroong_right_ear.png', cv2.IMREAD_UNCHANGED)
     image_left_ear = cv2.imread('aroong_left_ear.png', cv2.IMREAD_UNCHANGED)
 
-    webrtc_ctx = webrtc.StreamerRTC()
-    video_transformer = webrtc_ctx.video_transformer()
+    # For webcam input:
+    cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        st.error("Failed to open the camera.")
+        return
+
+    stframe = st.empty()
 
     with mp_face_detection.FaceDetection(
             model_selection=0, min_detection_confidence=0.5) as face_detection:
         while True:
-            if not webrtc_ctx.video_receiver():
-                st.warning("Waiting for video...")
-                continue
+            success, image = cap.read()
+            if not success:
+                st.error("Failed to read a frame from the camera.")
+                break
 
-            image = webrtc_ctx.video_receiver().data
-            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+            image.flags.writeable = False
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             results = face_detection.process(image)
+
+            image.flags.writeable = True
+            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
             if results.detections:
                 for detection in results.detections:
@@ -72,14 +80,12 @@ def main():
                     for keypoint, keypoint_image in overlays:
                         overlay(image, *keypoint, int(keypoint_image.shape[1] / 2), int(keypoint_image.shape[0] / 2),
                                 keypoint_image)
-                # Your face detection and overlay code here
 
             # Flip the image horizontally for a selfie-view display.
-            image = cv2.flip(image, 1)
-            webrtc_ctx.video_sender().send(image)
+            stframe.image(cv2.flip(image, 1), channels="BGR", caption='MediaPipe Face Detection', use_column_width=True)
 
-    webrtc_ctx.video_receiver().stop()
-    webrtc_ctx.video_sender().stop()
+    cap.release()
+    cv2.destroyAllWindows()
 
 if __name__ == '__main__':
     main()
